@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"sync"
 
 	"github.com/perlin-network/noise"
@@ -11,7 +12,7 @@ import (
 func main() {
 
 	reciever()
-	sender()
+	//sender()
 	// // Let there be nodes Alice and Bob.
 
 	// alice, err := noise.NewNode()
@@ -84,7 +85,7 @@ func main() {
 }
 
 func reciever() {
-	reciever, err := noise.NewNode()
+	reciever, err := noise.NewNode(noise.WithNodeBindHost(net.ParseIP("192.168.1.120")))
 	if err != nil {
 		panic(err)
 	}
@@ -131,7 +132,7 @@ func sender() {
 		panic(err)
 	}
 
-	if err := sender.Send(context.TODO(), "", []byte("Hi There")); err != nil {
+	if err := sender.Send(context.TODO(), "192.168.1.120:57582", []byte("Hi There")); err != nil {
 		panic(err)
 	}
 }
