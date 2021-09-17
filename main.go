@@ -85,7 +85,7 @@ func main() {
 }
 
 func reciever() {
-	reciever, err := noise.NewNode(noise.WithNodeBindHost(net.ParseIP("192.168.1.120")))
+	reciever, err := noise.NewNode(noise.WithNodeBindHost(net.ParseIP("192.168.1.120")), noise.WithNodeBindPort(49972))
 	if err != nil {
 		panic(err)
 	}
@@ -103,12 +103,6 @@ func reciever() {
 	if err := reciever.Listen(); err != nil {
 		panic(err)
 	}
-
-	// if err := reciever.Send(context.TODO(), "", []byte("Hi There")); err != nil {
-	// 	panic(err)
-	// }
-
-	fmt.Println(reciever.Addr())
 
 }
 
