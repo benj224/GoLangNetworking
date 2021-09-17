@@ -11,8 +11,8 @@ import (
 
 func main() {
 
-	reciever()
-	//sender()
+	//reciever()
+	sender()
 	// // Let there be nodes Alice and Bob.
 
 	// alice, err := noise.NewNode()
@@ -113,7 +113,7 @@ func reciever() {
 }
 
 func sender() {
-	sender, err := noise.NewNode()
+	sender, err := noise.NewNode(noise.WithNodeBindHost(net.ParseIP("192.168.1.126")), noise.WithNodeBindPort(49972))
 	if err != nil {
 		panic(err)
 	}
@@ -128,11 +128,7 @@ func sender() {
 		return nil
 	})
 
-	if err := sender.Listen(); err != nil {
-		panic(err)
-	}
-
-	if err := sender.Send(context.TODO(), "192.168.1.120:57582", []byte("Hi There")); err != nil {
+	if err := sender.Send(context.TODO(), "192.168.1.120:49972", []byte("Hi There")); err != nil {
 		panic(err)
 	}
 }
