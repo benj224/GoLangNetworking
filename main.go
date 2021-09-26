@@ -85,18 +85,18 @@ func main() {
 }
 
 func reciever() {
-	reciever, err := noise.NewNode(noise.WithNodeBindHost(net.ParseIP("192.168.1.120")), noise.WithNodeBindPort(49972))
+	reciever, err := noise.NewNode(noise.WithNodeBindHost(net.ParseIP("192.168.1.114")), noise.WithNodeBindPort(49972))
 	if err != nil {
 		panic(err)
 	}
 
 	defer reciever.Close()
 
-	var wg sync.WaitGroup
+	//var wg sync.WaitGroup
 
 	reciever.Handle(func(ctx noise.HandlerContext) error {
 		fmt.Printf("Got a message: '%s'\n", string(ctx.Data()))
-		wg.Done()
+		//wg.Done()
 		return nil
 	})
 
@@ -116,6 +116,9 @@ func sender() {
 
 	var wg sync.WaitGroup
 
+	wg.Add(1)
+	wg.Wait()
+
 	sender.Handle(func(ctx noise.HandlerContext) error {
 		fmt.Printf("Got a message: '%s'\n", string(ctx.Data()))
 		wg.Done()
@@ -126,7 +129,7 @@ func sender() {
 		panic(err)
 	}
 
-	if err := sender.Send(context.TODO(), "192.168.1.120:57582", []byte("Hi There")); err != nil {
+	if err := sender.Send(context.TODO(), "192.168.1.114:57582", []byte("Hi There")); err != nil {
 		panic(err)
 	}
 }
