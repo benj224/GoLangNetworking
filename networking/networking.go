@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/perlin-network/noise"
+	"github.com/perlin-network/noise/kademlia"
 )
 
 func Init() {
@@ -16,7 +17,10 @@ func Init() {
 		panic(err)
 	}
 
-	if _, err := selfNode.Ping(context.TODO(), alice.Addr()); err != nil {
+	selfKademlia := kademlia.New()
+	selfNode.Bind(selfKademlia.Protocol())
+
+	if _, err := selfNode.Ping(context.TODO(), "someIP"); err != nil {
 		panic(err)
 	}
 
@@ -35,4 +39,5 @@ func GetPublicIp() string {
 		panic(err)
 	}
 	return string(ip)
+
 }
