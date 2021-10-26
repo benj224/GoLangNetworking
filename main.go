@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/benj224/GoLangNetworking/networking"
 	"github.com/perlin-network/noise"
 )
 
 func main() {
-
-	reciever()
+	ip := networking.GetPublicIp()
+	//reciever()
 	//sender()
-
+	fmt.Printf(ip)
 }
 
 func reciever() {
