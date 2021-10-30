@@ -2,72 +2,54 @@ package main
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/perlin-network/noise"
-	"github.com/perlin-network/noise/kademlia"
+	"io"
+	"log"
+	"net"
+	"time"
 )
 
-// This example demonstrates how to use Kademlia to have three peers Alice, Charlie and bob discover
-// each other in an open, trustless network.
 func main() {
-	// Let there be Alice, Bob, and Charlie.
 
-	alice, err := noise.NewNode()
+}
+
+func ExampleListener() {
+	// Listen on TCP port 2000 on all available unicast and
+	// anycast IP addresses of the local system.
+	l, err := net.Listen("tcp", ":2000")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+	defer l.Close()
+	for {
+		// Wait for a connection.
+		conn, err := l.Accept()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Handle the connection in a new goroutine.
+		// The loop then returns to accepting, so that
+		// multiple connections may be served concurrently.
+		go func(c net.Conn) {
+			// Echo all incoming data.
+			io.Copy(c, c)
+			// Shut down the connection.
+			c.Close()
+		}(conn)
+	}
+}
 
-	bob, err := noise.NewNode()
+func ExampleDialer() {
+	var d net.Dialer
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	conn, err := d.DialContext(ctx, "tcp", "localhost:12345")
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to dial: %v", err)
 	}
+	defer conn.Close()
 
-	charlie, err := noise.NewNode()
-	if err != nil {
-		panic(err)
+	if _, err := conn.Write([]byte("Hello, World!")); err != nil {
+		log.Fatal(err)
 	}
-
-	// Alice, Bob, and Charlie are following an overlay network protocol called Kademlia to discover, interact, and
-	// manage each others peer connections.
-
-	ka, kb, kc := kademlia.New(), kademlia.New(), kademlia.New()
-
-	alice.Bind(ka.Protocol())
-	bob.Bind(kb.Protocol())
-	charlie.Bind(kc.Protocol())
-
-	if err := alice.Listen(); err != nil {
-		panic(err)
-	}
-
-	if err := bob.Listen(); err != nil {
-		panic(err)
-	}
-
-	if err := charlie.Listen(); err != nil {
-		panic(err)
-	}
-
-	// Have Bob and Charlie learn about Alice. Bob and Charlie do not yet know of each other.
-
-	if _, err := bob.Ping(context.TODO(), alice.Addr()); err != nil {
-		panic(err)
-	}
-
-	if _, err := charlie.Ping(context.TODO(), bob.Addr()); err != nil {
-		panic(err)
-	}
-
-	// Using Kademlia, Bob and Charlie will learn of each other. Alice, Bob, and Charlie should
-	// learn about each other once they run (*kademlia.Protocol).Discover().
-
-	fmt.Printf("Alice discovered %d peer(s).\n", len(ka.Discover()))
-	fmt.Printf("Bob discovered %d peer(s).\n", len(kb.Discover()))
-	fmt.Printf("Charlie discovered %d peer(s).\n", len(kc.Discover()))
-
-	// Output:
-	// Alice discovered 2 peer(s).
-	// Bob discovered 2 peer(s).
-	// Charlie discovered 2 peer(s).
 }
