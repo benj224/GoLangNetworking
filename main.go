@@ -2,40 +2,67 @@ package main
 
 import (
 	"context"
-	"io"
+	"crypto/rsa"
+	"crypto/sha256"
+	"fmt"
 	"log"
 	"net"
 	"time"
+
+	"github.com/benj224/GoLangNetworking/keys"
 )
 
 func main() {
-
+	PrKey, PuKey := keys.GenerateKeyPair(256)
+	hashId := sha256.Sum256(keys.PublicKeyToBytes(PuKey))
+	node1 := node{
+		address:    "192.168.1.117:49972",
+		id:         string(hashId[:]),
+		publicKey:  PuKey,
+		privateKey: PrKey,
+	}
+	table = append(table, node1)
+	Broadcast([]byte("hello world"))
 }
 
+var b []byte
+
+type node struct {
+	address    string
+	id         string
+	publicKey  *rsa.PublicKey
+	privateKey *rsa.PrivateKey
+}
+
+var table []node
+
+//adding test nodes
+
 func ExampleListener() {
-	// Listen on TCP port 2000 on all available unicast and
-	// anycast IP addresses of the local system.
-	l, err := net.Listen("tcp", ":2000")
+	l, err := net.Listen("tcp", ":49972")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer l.Close()
 	for {
-		// Wait for a connection.
 		conn, err := l.Accept()
 		if err != nil {
 			log.Fatal(err)
 		}
-		// Handle the connection in a new goroutine.
-		// The loop then returns to accepting, so that
-		// multiple connections may be served concurrently.
-		go func(c net.Conn) {
-			// Echo all incoming data.
-			io.Copy(c, c)
-			// Shut down the connection.
-			c.Close()
-		}(conn)
+		go handleRequest(conn)
 	}
+}
+
+func handleRequest(conn net.Conn) {
+	buf := make([]byte, 1024)
+	_, err := conn.Read(buf)
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+	}
+	conn.Write([]byte("Message received."))
+
+	fmt.Printf(string(buf))
+	conn.Close()
 }
 
 func ExampleDialer() {
@@ -43,7 +70,7 @@ func ExampleDialer() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	conn, err := d.DialContext(ctx, "tcp", "localhost:12345")
+	conn, err := d.DialContext(ctx, "tcp", "192.168.1.117:49972")
 	if err != nil {
 		log.Fatalf("Failed to dial: %v", err)
 	}
@@ -51,5 +78,24 @@ func ExampleDialer() {
 
 	if _, err := conn.Write([]byte("Hello, World!")); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func Broadcast(message []byte) {
+	var d net.Dialer
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+
+	for _, node := range table {
+		defer cancel()
+
+		conn, err := d.DialContext(ctx, "tcp", node.address)
+		if err != nil {
+			log.Fatalf("Failed to dial: %v", err)
+		}
+		defer conn.Close()
+
+		if _, err := conn.Write(message); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
