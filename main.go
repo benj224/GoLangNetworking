@@ -3,26 +3,24 @@ package main
 import (
 	"context"
 	"crypto/rsa"
-	"crypto/sha256"
 	"fmt"
 	"log"
 	"net"
 	"time"
-
-	"github.com/benj224/GoLangNetworking/keys"
 )
 
 func main() {
-	PrKey, PuKey := keys.GenerateKeyPair(256)
-	hashId := sha256.Sum256(keys.PublicKeyToBytes(PuKey))
-	node1 := node{
-		address:    "192.168.1.117:49972",
-		id:         string(hashId[:]),
-		publicKey:  PuKey,
-		privateKey: PrKey,
-	}
-	table = append(table, node1)
-	Broadcast([]byte("hello world"))
+	ExampleListener()
+	// PrKey, PuKey := keys.GenerateKeyPair(256)
+	// hashId := sha256.Sum256(keys.PublicKeyToBytes(PuKey))
+	// node1 := node{
+	// 	address:    "82.132.184.155:49972",
+	// 	id:         string(hashId[:]),
+	// 	publicKey:  PuKey,
+	// 	privateKey: PrKey,
+	// }
+	// table = append(table, node1)
+	// Broadcast([]byte("hello world"))
 }
 
 var b []byte
@@ -56,12 +54,16 @@ func ExampleListener() {
 func handleRequest(conn net.Conn) {
 	buf := make([]byte, 1024)
 	_, err := conn.Read(buf)
+	conn.RemoteAddr()
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 	}
 	conn.Write([]byte("Message received."))
 
 	fmt.Printf(string(buf))
+
+	//fmt.Printf(conn.LocalAddr().String())
+	fmt.Printf(conn.RemoteAddr().String())
 	conn.Close()
 }
 
